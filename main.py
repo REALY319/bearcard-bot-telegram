@@ -4,7 +4,7 @@ from conexao_bot import conectar_mysql
 from threading import Thread
 import random
 
-bot = telebot.TeleBot("6593281847:AAFMstXca0SHxjZhmuBXi2NTQZgS4Snqzp0")
+bot = telebot.TeleBot("token")
 
 # Dicionário para armazenar informações sobre os jogadores
 jogadores_registrados = {}
