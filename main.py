@@ -1,11 +1,12 @@
 import telebot
 from telebot import types, util
 from conexao_bot import conectar_mysql
+from conexao_bot import TOKEN
 from threading import Thread
 import random
 from giros_att import aumentar_quantidade_jogadores
 
-bot = telebot.TeleBot("token")
+bot = telebot.TeleBot(TOKEN)
 
 # Dicionário para armazenar informações sobre os jogadores
 jogadores_registrados = {}
