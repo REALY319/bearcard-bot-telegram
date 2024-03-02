@@ -5,7 +5,6 @@ from threading import Thread
 import random
 from giros_att import aumentar_quantidade_jogadores
 
-
 bot = telebot.TeleBot("token")
 
 # Dicionário para armazenar informações sobre os jogadores
