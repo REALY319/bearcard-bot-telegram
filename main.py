@@ -3,8 +3,10 @@ from telebot import types, util
 from conexao_bot import conectar_mysql
 from threading import Thread
 import random
+from giros_att import aumentar_quantidade_jogadores
 
-bot = telebot.TeleBot("6593281847:AAFMstXca0SHxjZhmuBXi2NTQZgS4Snqzp0")
+
+bot = telebot.TeleBot("token")
 
 # Dicionário para armazenar informações sobre os jogadores
 jogadores_registrados = {}
@@ -1043,7 +1045,9 @@ def processar_roleta(chat_id, username, categoria_escolhida, obra_escolhida):
                     carta_info = obter_carta_por_id(carta_id)
 
                     # Adiciona o emoji da categoria ao nome da categoria
-                    emoji_categoria = emojis_por_categoria.get(categoria_escolhida, "❓")
+                    emoji_categoria = emojis_por_categoria.get(
+                        categoria_escolhida, "❓"
+                    )
 
                     # Inclui o ID da carta na mensagem
                     mensagem = (
