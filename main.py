@@ -4,7 +4,9 @@ from conexao_bot import conectar_mysql
 from conexao_bot import TOKEN
 from threading import Thread
 import random
-from giros_att import aumentar_quantidade_jogadores
+
+# from giros_att import aumentar_quantidade_jogadores
+
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -227,16 +229,40 @@ def obter_cartas_faltantes_obra(user_id, obra_nome):
     return cartas_faltantes
 
 
-def obter_obras_por_categoria():
+def obter_todas_obras():
+    obras = []
+
+    conexao = conectar_mysql()
+    if conexao:
+        try:
+            cursor = conexao.cursor()
+            cursor.execute("SELECT obraNome FROM obras ORDER BY obraNome")
+            obras = [obra[0] for obra in cursor.fetchall()]
+        except Exception as e:
+            print(f"Erro ao obter todas as obras: {e}")
+        finally:
+            cursor.close()
+            conexao.close()
+
+    return obras
+
+
+def obter_obras_por_categoria(categoria=None):
     conexao = conectar_mysql()
     obras_por_categoria = {}
 
     if conexao:
         try:
             cursor = conexao.cursor(dictionary=True)
-            cursor.execute(
-                "SELECT categoriaNome, obraNome FROM obras ORDER BY categoriaNome, obraNome;"
-            )
+            if categoria:
+                cursor.execute(
+                    "SELECT categoriaNome, obraNome FROM obras WHERE categoriaNome = %s ORDER BY obraNome;",
+                    (categoria,),
+                )
+            else:
+                cursor.execute(
+                    "SELECT categoriaNome, obraNome FROM obras ORDER BY categoriaNome, obraNome;"
+                )
             obras = cursor.fetchall()
 
             for obra in obras:
@@ -262,23 +288,34 @@ def obter_obras_por_categoria():
 def obras_command(message):
     chat_id = message.chat.id
 
-    # Conecte-se ao banco de dados e recupere as obras por categoria
-    obras_por_categoria = obter_obras_por_categoria()
+    # Remove o comando do texto da mensagem
+    command_text = message.text.replace("/obras", "").strip().lower()
 
-    if obras_por_categoria:
-        # Crie a mensagem com as obras separadas por categorias
-        mensagem_obras = "Aqui estão as obras separadas por categorias:\n\n"
+    # Verifica se foi especificada uma categoria
+    if command_text:
+        # Conecte-se ao banco de dados e recupere as obras por categoria
+        obras_por_categoria = obter_obras_por_categoria()
 
-        for categoria, obras in obras_por_categoria.items():
-            mensagem_obras += f"<b>{categoria}:</b>\n"
+        # Verifica se a categoria fornecida existe
+        if command_text in obras_por_categoria:
+            obras = obras_por_categoria[command_text]
+            mensagem_obras = f"Aqui estão as obras da categoria <b>{command_text.capitalize()}:</b>\n\n"
             for obra in obras:
                 mensagem_obras += f" - {obra}\n"
-            mensagem_obras += "\n"
-
-        # Envie a mensagem formatada
-        bot.send_message(chat_id, mensagem_obras, parse_mode="HTML")
+            bot.send_message(chat_id, mensagem_obras, parse_mode="HTML")
+        else:
+            bot.send_message(chat_id, "Categoria não encontrada.")
     else:
-        bot.send_message(chat_id, "Não há obras cadastradas no momento.")
+        # Conecte-se ao banco de dados e recupere todas as obras
+        todas_obras = obter_todas_obras()
+
+        if todas_obras:
+            mensagem_obras = "Aqui estão todas as obras:\n\n"
+            for obra in todas_obras:
+                mensagem_obras += f" - {obra}\n"
+            bot.send_message(chat_id, mensagem_obras)
+        else:
+            bot.send_message(chat_id, "Não há obras cadastradas no momento.")
 
 
 @bot.message_handler(commands=["have"])
@@ -368,7 +405,7 @@ def nhave_command(message):
     input_args = message.text.split(" ", 1)
     if len(input_args) != 2:
         bot.send_message(
-            chat_id, "Formato inválido. Use /nhave <nome_ou_apelido_da_obra>"
+            chat_id, "Formato inválido. Use /nhave <nome ou apelido da obra>"
         )
         return
 
